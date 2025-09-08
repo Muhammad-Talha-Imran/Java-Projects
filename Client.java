@@ -1,36 +1,43 @@
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
 
 public class Client {
-    public static void main(String[] args) {
-        String host = "localhost"; // change if server is remote
-        int port = 5000;
+    private static final String SERVER_HOST = "localhost";
+    private static final int SERVER_PORT = 12345;
 
-        try (Socket socket = new Socket(host, port)) {
+    public static void main(String[] args) {
+        try (
+            Socket socket = new Socket(SERVER_HOST, SERVER_PORT);
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader userInput = new BufferedReader(
+                new InputStreamReader(System.in))
+        ) {
+            String serverMessage;
             System.out.println("Connected to server.");
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            // Read welcome message
+            if ((serverMessage = in.readLine()) != null) {
+                System.out.println("Server: " + serverMessage);
+            }
 
-            Scanner scanner = new Scanner(System.in);
-            String message;
-
+            String input;
             while (true) {
-                System.out.print("Enter message: ");
-                message = scanner.nextLine();
-                out.println(message);
-
-                String response = in.readLine();
-                System.out.println("Server: " + response);
-
-                if (message.equalsIgnoreCase("quit")) {
-                    System.out.println("Closing client...");
+                System.out.print("You: ");
+                input = userInput.readLine();
+                if (input == null || input.equalsIgnoreCase("exit")) {
+                    out.println("exit");
                     break;
+                }
+                out.println(input);
+                serverMessage = in.readLine();
+                if (serverMessage != null) {
+                    System.out.println(serverMessage);
                 }
             }
 
-            scanner.close();
+            System.out.println("Disconnected from server.");
         } catch (IOException e) {
             e.printStackTrace();
         }
